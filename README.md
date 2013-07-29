@@ -1,2 +1,2 @@
-oow13-demo-client
+oow13-demo
 =================
