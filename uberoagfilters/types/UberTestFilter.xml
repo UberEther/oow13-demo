@@ -1,0 +1,5 @@
+<entityStoreData> 
+  <entityType name="UberTestFilter" extends="Filter">
+    <constant name="class" type="string" value="com.uberether.oow.oag.filters.test.UberTestFilter"/>
+  </entityType> 
+</entityStoreData>    

@@ -1,0 +1,105 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.uberether</groupId>
+    <artifactId>UberOagFilters</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>Uber OAG Filters</name>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <plugins>
+            <!-- Maven compiler plugin to specify Java 1.7 target -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    
+    <dependencies>
+        <dependency>
+            <groupId>org.uberether.oow.oag</groupId>
+            <artifactId>circuit</artifactId>
+            <version>7.1.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.uberether.oow.oag</groupId>
+            <artifactId>common</artifactId>
+            <version>7.1.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.uberether.oow.oag</groupId>
+            <artifactId>entityStore</artifactId>
+            <version>7.1.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.uberether.oow.oag</groupId>
+            <artifactId>precipitate</artifactId>
+            <version>7.1.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.uberether.oow.oag</groupId>
+            <artifactId>manager</artifactId>
+            <version>7.1.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>swt</groupId>
+            <artifactId>swt-linux-gtk</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>eclipse</groupId>
+            <artifactId>eclipse-jface</artifactId>
+            <version>2.1.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.uberether.oow.oag</groupId>
+            <artifactId>client</artifactId>
+            <version>7.1.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.uberether.oow.oag</groupId>
+            <artifactId>server</artifactId>
+            <version>7.1.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.uberether.oow.oag</groupId>
+            <artifactId>com.vordel.circuit.oauth</artifactId>
+            <version>7.1.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.persistence</groupId>
+            <artifactId>persistence-api</artifactId>
+            <version>1.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>

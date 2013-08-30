@@ -1,0 +1,5 @@
+<typeSet>
+   <typedoc file="UberTestFilter.xml"/>
+   <typedoc file="UberOAuth2Filter.xml"/>
+   <typedoc file="UberAgentFilter.xml"/>
+</typeSet>    

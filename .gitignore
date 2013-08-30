@@ -1,2 +1,4 @@
 /uberxkcd/target/
 /uberxkcd/nb-configuration.xml
+/uberoagfilters/target/
+/uberoagfilters/external/*.jar
