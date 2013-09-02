@@ -6,7 +6,11 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 
 /**
- *
+ * Configuration UI page for this filter.  Has only one property for the 
+ * filter name.
+* 
+ * Based on sample filter from the OAG tutorial
+  *
  * @author msamblanet
  */
 public class UberTestPage extends VordelPage {

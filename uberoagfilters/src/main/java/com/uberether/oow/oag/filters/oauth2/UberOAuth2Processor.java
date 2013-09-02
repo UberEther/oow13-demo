@@ -9,22 +9,37 @@ import com.vordel.circuit.oauth.token.OAuth2AccessToken;
 import com.vordel.trace.Trace;
 
 /**
+ * Process a request by reading the accesstoken property from the message and 
+ * extracting the token from it.  The database id for the token is also 
+ * generated so that downstream filter can reference the token in the database.
+ * 
+ * input:  accesstoken (OAuth2AccessToken)
+ * output: uber.oath2.access_token (String) - String form of the access token
+ * output: uber.oauth2.id (String) - DB ID for the token
+ * 
+ * Returns true (success) if accesstoken is present AND of type OAuth2AccessToken
+ * Returns false (failure) otherwise
+ * 
+ * @todo Would be better to make all these variable names configurable
  *
  * @author msamblanet
  */
 public class UberOAuth2Processor extends MessageProcessor {
     @Override
     public boolean invoke(Circuit crct, Message msg) throws CircuitAbortException {
-        OAuth2AccessToken accessToken = (OAuth2AccessToken) msg.get("accesstoken");
-        if (accessToken != null) {
-            String dbAccessTokenId = OAuth2Utils.digest(accessToken.getValue());
+        Object token = msg.get("accesstoken");
+        if (token != null && token instanceof OAuth2AccessToken) {
+            OAuth2AccessToken accessToken = (OAuth2AccessToken) token;
+
+            String tokenString = accessToken.getValue();
+            String dbAccessTokenId = OAuth2Utils.digest(tokenString);
             
-            msg.put("uber.oauth2.access_token", accessToken.getValue());
+            msg.put("uber.oauth2.access_token", tokenString);
             msg.put("uber.oauth2.id", dbAccessTokenId);
 
             if (Trace.isDebugEnabled()) {
                 Trace.debug("************************************************************");
-                Trace.debug("********** Access Token: "+accessToken.getValue());
+                Trace.debug("********** Access Token: "+tokenString);
                 Trace.debug("********** DB ID: "+dbAccessTokenId);
                 Trace.debug("************************************************************");
             }

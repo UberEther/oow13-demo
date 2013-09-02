@@ -9,7 +9,10 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.Image;
 
 /**
- *
+* Configuration UI definition for the filter.
+ * 
+ * Based on sample filter from the OAG tutorial
+  *
  * @author msamblanet
  */
 public class UberTestUI extends DefaultGUIFilter {

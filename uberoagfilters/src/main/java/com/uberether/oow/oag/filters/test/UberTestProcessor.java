@@ -17,7 +17,11 @@ import java.io.IOException;
 import java.util.Map;
 
 /**
- *
+ * Process a request by duping details about the message out to the trace
+ * log at error level.  Intended for training purposes and debugging.
+ * 
+ * Always returns true (success)
+ * 
  * @author msamblanet
  */
 public class UberTestProcessor extends MessageProcessor {

@@ -12,6 +12,19 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+    
+    <repositories>
+        <repository>
+            <id>bitwalker.user-agent-utils.mvn.repo</id>
+            <url>https://raw.github.com/HaraldWalker/user-agent-utils/mvn-repo/</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>onejar-maven-plugin.googlecode.com</id>
+            <url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>
+        </pluginRepository>
+    </pluginRepositories>
 
     <build>
         <plugins>
@@ -25,9 +38,26 @@
                     <target>1.6</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.dstovall</groupId>
+                <artifactId>onejar-maven-plugin</artifactId>
+                <version>1.4.4</version>
+                <executions>
+                    <execution>
+                        <configuration>
+                            <onejarVersion>0.97</onejarVersion>
+                            <attachToBuild>true</attachToBuild>
+                            <classifier>onejar</classifier>
+                        </configuration>
+                        <goals>
+                            <goal>one-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
-    </build>
-    
+    </build>   
+
     <dependencies>
         <dependency>
             <groupId>org.uberether.oow.oag</groupId>
@@ -100,6 +130,11 @@
             <artifactId>persistence-api</artifactId>
             <version>1.0.2</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>bitwalker</groupId>
+            <artifactId>UserAgentUtils</artifactId>
+            <version>1.9</version>
         </dependency>
     </dependencies>
 </project>
