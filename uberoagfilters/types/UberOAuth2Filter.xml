@@ -1,5 +1,5 @@
 <entityStoreData> 
   <entityType name="UberOauth2Filter" extends="Filter">
-    <constant name="class" type="string" value="com.uberether.oow.oag.filters.oauth2.UberOauth2Filter"/>
+    <constant name="class" type="string" value="com.uberether.oow.oag.filters.oauth2.UberOAuth2Filter"/>
   </entityType> 
 </entityStoreData>    

@@ -49,7 +49,7 @@ public class UberOAuth2UI extends DefaultGUIFilter {
     /*
      *  Register our custom images with the image registry
      */
-    private static final String IMAGE_KEY = "uberOauth2Filter";
+    private static final String IMAGE_KEY = "uberOAuth2Filter";
     static {
         Images.getImageRegistry().put(IMAGE_KEY, 
                 Images.createDescriptor(UberOAuth2UI.class, "uber.gif"));

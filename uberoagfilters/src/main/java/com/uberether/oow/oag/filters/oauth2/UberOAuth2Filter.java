@@ -27,12 +27,12 @@ public class UberOAuth2Filter extends DefaultFilter {
     @Override
     public Class getConfigPanelClass() throws ClassNotFoundException {
         // Load dynamically because runtime JVM may not have all the UI dependencies
-        return Class.forName("com.uberether.oow.oag.filters.oauth2.UberOauth2UI");
+        return Class.forName("com.uberether.oow.oag.filters.oauth2.UberOAuth2UI");
     }
 
     @Override
     public Class getMessageProcessorClass() throws ClassNotFoundException {
         // Load dynamically beause the designer JVM may not have all the runtime dependencies
-        return Class.forName("com.uberether.oow.oag.filters.oauth2.UberOauth2Processor");
+        return Class.forName("com.uberether.oow.oag.filters.oauth2.UberOAuth2Processor");
     }
 }
