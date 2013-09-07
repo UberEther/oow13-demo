@@ -153,8 +153,10 @@ public class UberXkcdService {
             
             // Load the most recent from the website and use for up to 24 hours
             if (hwm < 0 || hwmExpiration != 0) {
-                Map<String, Object> ep = loadEpisode(-1);
-                hwm = ((Number) ep.get("num")).intValue();
+                if (System.getProperty("xkcdOffline") == null) {
+                    Map<String, Object> ep = loadEpisode(-1);
+                    hwm = ((Number) ep.get("num")).intValue();
+                }
                 hwmExpiration = System.currentTimeMillis() + 24L * 60L * 60L * 1000L;
             }
         }
@@ -231,6 +233,10 @@ public class UberXkcdService {
                     return jsonMapper.readValue(r, TYPEREF_MAP);
                 }
             }
+        }
+        
+        if (System.getProperty("xkcdOffline") != null) {
+            throw new IOException("Cannot load episode "+id+" because the app was started in offline mode");
         }
         
         // Load JSON
