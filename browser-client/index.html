@@ -3,8 +3,40 @@
     <title>It's the App</title>
     <script src="js/jquery.js"></script>
     <script>
+      $(function() {
+        $.ajaxSetup({
+          error: function(jqXHR, exception) {
+            if (jqXHR.status === 0) {
+                alert('Not connect.\n Verify Network.');
+            } else if (jqXHR.status == 404) {
+                alert('Requested page not found. [404]');
+            } else if (jqXHR.status == 401) {
+                alert('Your Token is Invalid or Missing.');
+                window.location = jqXHR.getResponseHeader('authorization_uri') + encodeURIComponent(window.location.href);
+            } else if (jqXHR.status == 500) {
+                alert('Something has gone horribly wrong. Please alerts the authorities.');
+            } else if (exception === 'parsererror') {
+                alert('Requested JSON parse failed.');
+            } else if (exception === 'timeout') {
+                alert('Time out error.');
+            } else if (exception === 'abort') {
+                alert('Ajax request aborted.');
+            } else {
+                alert('Uncaught Error.\n' + jqXHR.responseText);
+            }
+          }
+        });
+      });
       $("document").ready(function() {
-        $.getJSON("/uberxkcd/random", function(data) {
+        var bearerToken = "Bearer " + window.location.hash.split('&',1).toString().replace('#access_token=','');
+        $.ajax({
+          url: '/uberxkcd/random',
+          beforeSend: function(xhr){
+                        if (bearerToken != 'Bearer ') { 
+                          xhr.setRequestHeader('Authorization', bearerToken);
+                        }
+                      }
+        }).done( function(data) {
           var items = [];
           $.each(data, function(key, val) {
             items.push('<li id="' + key + '">' + key + '-' + val + '</li>');
@@ -13,7 +45,7 @@
             'class': 'my-new-list',
             html: items.join('')
           }).appendTo('body');
-          $('<img src="data:' + data.img.mime + ';base64,' + data.img.b64 + '" alt="XKCD Comic"/>').appendTo('body')
+          $('<img src="data:' + data.img.mime + ';base64,' + data.img.b64 + '" alt="' + data.alt + '"/>').appendTo('body')
         });
       });
     </script>
