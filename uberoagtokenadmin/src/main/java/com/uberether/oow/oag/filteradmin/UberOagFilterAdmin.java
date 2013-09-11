@@ -15,18 +15,24 @@ import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import javax.ws.rs.core.Response;
 
 /**
  * UberOagFilterAdmin - Simple Rest API for quering and revoking OAuth2 tokens
- * Used by the 2013 OOW presentation of Matt Topper's as an unsecured API
+ * Used by the 2013 OOW presentation of Matt Topper's to demonstrate token
+ * administration
  *
  *
  * Annotated as a JAX-RS Service with endpoints: /uberoagtokenadmin/shutdown -
@@ -56,7 +62,7 @@ public class UberOagFilterAdmin {
      * @return A constant string so the user is not left hanging...
      */
     @GET
-    @Path("/uberoagtokenadmin/shutdown")
+        @Path("/uberoagtokenadmin/shutdown")
     @Produces("text/plain")
     public String shutdown() {
         synchronized (lockObject) {
@@ -75,8 +81,50 @@ public class UberOagFilterAdmin {
     @GET
     @Path("/")
     @Produces("text/plain")
-    public String getRoot() {
-        return ("Use the right URL silly...");
+    public Response getRoot() {
+        return Response.status(Response.Status.SEE_OTHER)
+                       .header("Location", "site/index.html")
+                       .build();
+    }
+    
+    @GET
+    @Path("/site/{path:.*}")
+    public Response getSiteFile(@PathParam("path") String path) throws IOException {
+        
+        String mimeType = null;
+        if (path.endsWith("html")) {
+            mimeType = "text/html";
+        } else if (path.endsWith(".js")) {
+            mimeType = "application/javascript";
+        } else if (path.endsWith(".css")) {
+            mimeType = "text/css";
+        } else if (path.endsWith(".gif")) {
+            mimeType = "image/gif";
+        } else if (path.endsWith(".png")) {
+            mimeType = "image/png";
+        } 
+
+        Object data = null;
+        if (mimeType != null) {
+            try (InputStream in = getClass().getResourceAsStream(path)) {
+                if (in != null) {
+                    ByteArrayOutputStream bs = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[4096];
+                    int size;
+                    while ((size = in.read(buffer)) > 0) {
+                        bs.write(buffer, 0, size);
+                    }
+                    data = bs.toByteArray();
+                }
+            }
+        }
+                
+        if (data == null) {
+            return Response.ok("Not found: "+path).status(Response.Status.NOT_FOUND).build();
+        } else {
+            return Response.ok(data, mimeType)
+                    .build();
+        }
     }
 
     /**

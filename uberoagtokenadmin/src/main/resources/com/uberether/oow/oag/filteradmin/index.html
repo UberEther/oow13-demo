@@ -1,0 +1,135 @@
+<html>
+    <head>
+        <title>OAG Token Manager</title>
+
+        <link rel="stylesheet" href="slick.grid.css" type="text/css"/>
+        <link rel="stylesheet" href="css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
+        <link rel="stylesheet" href="examples.css" type="text/css"/>
+        <link rel="stylesheet" href="controls/slick.columnpicker.css" type="text/css"/>
+
+        <script src="lib/jquery-1.7.min.js"></script>
+        <script src="lib/jquery-ui-1.8.16.custom.min.js"></script>
+        <script src="lib/jquery.event.drag-2.0.min.js"></script>
+        <script src="slick.core.js"></script>
+        <script src="plugins/slick.checkboxselectcolumn.js"></script>
+        <script src="plugins/slick.autotooltips.js"></script>
+        <script src="plugins/slick.cellrangedecorator.js"></script>
+        <script src="plugins/slick.cellrangeselector.js"></script>
+        <script src="plugins/slick.cellcopymanager.js"></script>
+        <script src="plugins/slick.cellselectionmodel.js"></script>
+        <script src="plugins/slick.rowselectionmodel.js"></script>
+        <script src="controls/slick.columnpicker.js"></script>
+        <script src="slick.formatters.js"></script>
+        <script src="slick.editors.js"></script>
+        <script src="slick.grid.js"></script>        
+        
+        <style>
+            html, body {
+                margin: 0;
+                padding: 0;
+                background-color: White;
+                overflow: auto;
+            }
+
+            body {
+                font: 11px Helvetica, Arial, sans-serif;
+            }
+            
+            #pgHeader {
+                font-size: 250%;
+                font-weight: bold;
+                margin-left: 4px;
+                margin-top: 4px;
+            }
+            
+            #pgHeader img {
+                margin-right: 4px;
+                vertical-align: middle;
+            }
+
+            #container {
+                position: absolute;
+                top: 60px;
+                left: 0;
+                right: 0;
+                bottom: 0;
+            }
+            
+            .slick-cell-checkboxsel {
+                background: #f0f0f0;
+                border-right-color: silver;
+                border-right-style: solid;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="pgHeader">
+            <img src="uberether.png" />
+            OAG Token Manager
+        </div>
+        <div id="container"></div>
+
+        <script>
+            var grid,
+                data = [],
+                checkboxSelector = new Slick.CheckboxSelectColumn({
+                    cssClass: "slick-cell-checkboxsel"
+                }),
+                columns = [
+                    checkboxSelector.getColumnDefinition(),
+                    {id: "ID", name: "ID", field: "databaseId", width: 120, sortable: true},
+                    {id: "Client ID", name: "Client ID", field: "clientId", width: 120, sortable: true},
+                    {id: "Expires", name: "Expires", field: "expiryTime", width: 120, sortable: true},
+                    {id: "Browser", name: "Browser", field: "browser", width: 120, sortable: true},
+                    {id: "Ver", name: "Ver", field: "browserVer", width: 120, sortable: true},
+                    {id: "Platform", name: "Platform", field: "platform", width: 120, sortable: true},
+                    {id: "User Auth", name: "User Auth", field: "userAuth", width: 120, sortable: true},
+                    {id: "User Name", name: "User Name", field: "userName", width: 120, sortable: true} 
+                ],
+                options = {
+                    enableColumnReorder: false,
+                    enableCellNavigation: true,
+                    editable: true,
+                    asyncEditorLoading: false,
+                    autoEdit: false
+                };
+
+            for (var i = 100; i-- > 0; ) {
+                data[i] = {
+                    databaseId: "Task " + i,
+                    clientId: "5 days",
+                    expiryTime: Math.round(Math.random() * 100),
+                    browser: "01/01/2009",
+                    browserVer: "01/05/2009",
+                    platform: i % 5,
+                    userAuth: "C7-" + i,
+                    userName: "C8-" + i
+                };
+            }
+
+            grid = new Slick.Grid("#container", data, columns, options);
+            
+            grid.onSort.subscribe(function (e, args) {
+                var sign = args.sortAsc ? 1 : -1;
+                var field = args.sortCol.field;
+                data.sort(function (dataRow1, dataRow2) {
+                    var value1 = dataRow1[field], value2 = dataRow2[field];
+                    var result = (value1 === value2) ?  0 :
+                               ((value1 > value2 ? sign : -sign));
+                    return result;
+                });
+
+                grid.invalidateAllRows();
+                grid.render();
+            });
+            
+            grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+            grid.registerPlugin(checkboxSelector);
+
+            var columnpicker = new Slick.Controls.ColumnPicker(columns, grid, options);
+            
+            // @todo Filter control of some sort
+            // @todo Scroll bars?
+        </script>
+    </body>
+</html>
