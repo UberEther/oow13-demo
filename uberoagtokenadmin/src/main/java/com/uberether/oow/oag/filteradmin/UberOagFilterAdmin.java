@@ -22,6 +22,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 /**
@@ -101,7 +105,7 @@ public class UberOagFilterAdmin {
 
         Object data = null;
         if (mimeType != null) {
-            try (InputStream in = getClass().getResourceAsStream(path)) {
+            try (InputStream in = UberOagFilterAdmin.class.getResourceAsStream(path)) {
                 if (in != null) {
                     ByteArrayOutputStream bs = new ByteArrayOutputStream();
                     byte[] buffer = new byte[4096];
@@ -145,7 +149,7 @@ public class UberOagFilterAdmin {
     @Produces("application/json")
     public List<Token> getTokens() throws IOException, SQLException {
         // @todo It would be better to make htis more configurable...
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost/oauth_db", "root", "password")) {
+        try (Connection connection = getDbConnection()) {
             try (Statement stmt = connection.createStatement()) {
                 try (ResultSet rs = stmt.executeQuery("SELECT id, client_id, expiry_time, access_token, browser, browser_ver, platform, user_auth, user_name FROM oauth_access_token")) {
                     List<Token> rv = new LinkedList();
@@ -158,6 +162,10 @@ public class UberOagFilterAdmin {
         }
     }
 
+    protected Connection getDbConnection() throws SQLException {
+        return DriverManager.getConnection("jdbc:mysql://localhost/oauth_db", "root", "password");
+    }
+    
     /**
      * Revokes a single token
      *
@@ -165,16 +173,27 @@ public class UberOagFilterAdmin {
      * @return JSON describing the episode including a base64 encoded image
      * @throws IOException
      */
-    @GET
-    @Path("/uberoagtokenadmin/revoke/{id}")
-    @Produces("application/json")
-    public String revokeToken(@PathParam("id") String id) throws IOException, SQLException {
+    @POST
+    @Path("/uberoagtokenadmin/revoke")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public int revokeToken(Set<String> ids) throws IOException, SQLException {
         // @todo It would be better to make htis more configurable...
-        try (Connection connection = DriverManager.getConnection("jdbc:mysql://localhost/oauth_db", "root", "password")) {
-            try (PreparedStatement ps = connection.prepareStatement("UPDATE oauth_access_token SET expiry_time = DATE_SUB(CURDATE(),INTERVAL 1 SECOND) WHERE id = ?")) {
-                ps.setString(1, id);
-                int i = ps.executeUpdate();
-                return "Expired "+i+" tokens";
+        try (Connection connection = getDbConnection()) {
+            try (PreparedStatement ps = connection.prepareStatement("UPDATE oauth_access_token SET expiry_time = DATE_SUB(NOW(),INTERVAL 1 SECOND) WHERE id = ?")) {
+                for (String id : ids) {
+                    System.out.println("Batching revoke of "+id);
+                    ps.setString(1, id);
+                    ps.addBatch();
+                }
+                
+                System.out.println("Executng batch");
+                int n = 0;
+                for (int i : ps.executeBatch()) {
+                    n += i;
+                }
+                
+                return n;
             }
         }
     }

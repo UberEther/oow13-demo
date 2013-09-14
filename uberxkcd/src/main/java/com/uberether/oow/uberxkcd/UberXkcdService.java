@@ -78,7 +78,9 @@ public class UberXkcdService {
         // Not best pratice to hard code and do this statically...but it provides
         // for a simple setup for this demo app
         if (!cacheDir.exists()) {
-            cacheDir.mkdirs();
+            if (!cacheDir.mkdirs()) {
+                throw new RuntimeException("Unable to create cache directory");
+            }
         }
         if (!(cacheDir.canRead() && cacheDir.canWrite())) {
             throw new RuntimeException("Failed to initialize - Can't read and write cache dir: "+cacheDir);
@@ -259,7 +261,7 @@ public class UberXkcdService {
             
             // Build a sub-object with all the image data
             Map m2 = new LinkedHashMap();
-            m2.put("size",new Integer(out.size()));
+            m2.put("size",Integer.valueOf(out.size()));
             m2.put("mime",c.getHeaderField("Content-Type"));
             m2.put("src",url.toString());
             m2.put("b64", DatatypeConverter.printBase64Binary(out.toByteArray()));

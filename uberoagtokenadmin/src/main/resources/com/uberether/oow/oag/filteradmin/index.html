@@ -73,11 +73,11 @@
             &nbsp;
             <button id="refreshButton">Refresh</button>
             &nbsp;
-            <button id="revokeButton">Revoke Selected</button>
+            <button id="revokeSelectedButton">Revoke Selected</button>
             &nbsp;
             <button id="revokeAllButton">Revoke All</button>
             &nbsp;
-            <input id="filterText" type="text" />
+            Filter: <input id="filterText" type="text" /> <button id="clearFilterButton">Clear Filter</button>
         </div>
         <div id="container"></div>
 
@@ -104,16 +104,16 @@
                         editable: true,
                         asyncEditorLoading: false,
                         autoEdit: false
-                    };
-
-                var filterString = "";
-
-                var dataView = new Slick.Data.DataView();
+                    },
+                    $filterText = $("#filterText"),
+                    filterString = "",
+                    dataView = new Slick.Data.DataView(),
+                    $refreshButton = $("#refreshButton");
+                    
                 dataView.onRowCountChanged.subscribe(function (e, args) {
                   grid.updateRowCount();
                   grid.render();
                 });
-
                 dataView.onRowsChanged.subscribe(function (e, args) {
                   grid.invalidateRows(args.rows);
                   grid.render();
@@ -123,35 +123,22 @@
                     if (filterString === "") {
                         return true;
                     }
-                    return item.clientId.indexOf(databaseId) !== -1 ||
-                           item.clientId.indexOf(clientId) !== -1 ||
-                           item.clientId.indexOf(expiryTimeString) !== -1 ||
-                           item.clientId.indexOf(browser) !== -1 ||
-                           item.clientId.indexOf(browserVer) !== -1 ||
-                           item.clientId.indexOf(platform) !== -1 ||
-                           item.clientId.indexOf(userAuth) !== -1 ||
-                           item.clientId.indexOf(userName) !== -1;
+                    
+                    return item.id.indexOf(filterString) !== -1 ||
+                           item.clientId.indexOf(filterString) !== -1 ||
+                           item.expiryTimeString.indexOf(filterString) !== -1 ||
+                           item.browser.indexOf(filterString) !== -1 ||
+                           item.browserVer.indexOf(filterString) !== -1 ||
+                           item.platform.indexOf(filterString) !== -1 ||
+                           item.userAuth.indexOf(filterString) !== -1 ||
+                           item.userName.indexOf(filterString) !== -1;
                 });
                 dataView.endUpdate();            
-
-                function refreshGrid() {
-                    grid.invalidateAllRows();
-                    grid.render();
-                }
-
-                function reloadData() {
-                    $.getJSON("../tokens", function(data) {
-                        dataView.setItems(data);
-                        refreshGrid();
-                    });
-                }
 
                 grid = new Slick.Grid("#container", dataView, columns, options);
                 grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
                 grid.registerPlugin(checkboxSelector);
                 var columnpicker = new Slick.Controls.ColumnPicker(columns, grid, options);
-                // @todo Filter control of some sort
-                // @todo Scroll bars?
 
                 grid.onSort.subscribe(function (e, args) {
                     var sortField = args.sortCol.field;
@@ -162,27 +149,80 @@
                             return result;
                         }, args.sortAsc);
                 });
-                reloadData();
 
-                var $filterText = $("#filterText");
-                $("#refreshButton").click(function() {
-                    filterString = "";
-                    $filterText.value="";
-                    reloadData();
+
+                function revokeTokens(ids) {
+                    $.ajax("../revoke", { 
+                        data: JSON.stringify(ids), 
+                        contentType: "application/json", 
+                        type: "POST",
+                        cache: false
+                    }).done(function(data, textStatus, jqXHR) {
+                        $refreshButton.click();
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        alert("Failed to revoke tokens: "+textStatus+"\n\n"+errorThrown);
+                        $refreshButton.click();
+                    });
+                }
+               
+                $refreshButton.click(function() {
+                    $.ajax("../tokens", { 
+                        contentType: "application/json", 
+                        type: "GET",
+                        cache: false
+                    }).done(function(data, textStatus, jqXHR) {
+                        filterString = "";
+                        $filterText.val("");
+                        grid.setSelectedRows([]);
+                        dataView.beginUpdate();
+                        dataView.setItems(data);
+                        dataView.endUpdate();
+                        grid.invalidate();
+                    }).fail(function(jqXHR, textStatus, errorThrown) {
+                        alert("Failed to refresh: "+textStatus+"\n\n"+errorThrown);
+                    });
                 });
-                $("#revokeButton").click(function() {
-                    alert("B");
+                $("#revokeSelectedButton").click(function() {
+                    var ids = [];
+                    var selectedRows = grid.getSelectedRows();
+                    for (var i = selectedRows.length-1; i >= 0; i--) {
+                        var item = grid.getDataItem(selectedRows[i]);
+                        if (item) {
+                            ids.push(item.id);
+                        }
+                    }
+                    
+                    revokeTokens(ids);
                 });
                 $("#revokeAllButton").click(function() {
-                    alert("C");
+                    var ids = [];
+                    for (var i = dataView.getLength() - 1; i >= 0; i--) {
+                        var item = dataView.getItem(i);
+                        if (item) {
+                            ids.push(item.id);
+                        }
+                    }
+                    
+                    revokeTokens(ids);
                 });
+                $("#clearFilterButton").click(function(){
+                    filterString = "";
+                    $filterText.val("");
+                    dataView.beginUpdate();
+                    dataView.refresh();
+                    dataView.endUpdate();
+                })
                 $filterText.on("change keydown paste input", function() {
-                    var newVal = $filterText.value;
+                    var newVal = $filterText.val();
                     if (newVal !== filterString) {
-                        filterString = $filterText.value;
-                        refreshGrid();
+                        filterString = newVal;
+                        dataView.beginUpdate();
+                        dataView.refresh();
+                        dataView.endUpdate();
                     }
                 });
+                
+                $refreshButton.click();            
             });         
         </script>
     </body>
