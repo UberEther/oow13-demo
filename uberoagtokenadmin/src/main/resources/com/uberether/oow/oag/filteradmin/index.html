@@ -21,6 +21,7 @@
         <script src="controls/slick.columnpicker.js"></script>
         <script src="slick.formatters.js"></script>
         <script src="slick.editors.js"></script>
+        <script src="slick.dataview.js"></script>
         <script src="slick.grid.js"></script>        
         
         <style>
@@ -36,8 +37,6 @@
             }
             
             #pgHeader {
-                font-size: 250%;
-                font-weight: bold;
                 margin-left: 4px;
                 margin-top: 4px;
             }
@@ -45,6 +44,11 @@
             #pgHeader img {
                 margin-right: 4px;
                 vertical-align: middle;
+            }
+            
+            #title {
+                font-size: 250%;
+                font-weight: bold;
             }
 
             #container {
@@ -65,71 +69,121 @@
     <body>
         <div id="pgHeader">
             <img src="uberether.png" />
-            OAG Token Manager
+            <span id="title">OAG Token Manager</span>
+            &nbsp;
+            <button id="refreshButton">Refresh</button>
+            &nbsp;
+            <button id="revokeButton">Revoke Selected</button>
+            &nbsp;
+            <button id="revokeAllButton">Revoke All</button>
+            &nbsp;
+            <input id="filterText" type="text" />
         </div>
         <div id="container"></div>
 
         <script>
-            var grid,
-                data = [],
-                checkboxSelector = new Slick.CheckboxSelectColumn({
-                    cssClass: "slick-cell-checkboxsel"
-                }),
-                columns = [
-                    checkboxSelector.getColumnDefinition(),
-                    {id: "ID", name: "ID", field: "databaseId", width: 120, sortable: true},
-                    {id: "Client ID", name: "Client ID", field: "clientId", width: 120, sortable: true},
-                    {id: "Expires", name: "Expires", field: "expiryTime", width: 120, sortable: true},
-                    {id: "Browser", name: "Browser", field: "browser", width: 120, sortable: true},
-                    {id: "Ver", name: "Ver", field: "browserVer", width: 120, sortable: true},
-                    {id: "Platform", name: "Platform", field: "platform", width: 120, sortable: true},
-                    {id: "User Auth", name: "User Auth", field: "userAuth", width: 120, sortable: true},
-                    {id: "User Name", name: "User Name", field: "userName", width: 120, sortable: true} 
-                ],
-                options = {
-                    enableColumnReorder: false,
-                    enableCellNavigation: true,
-                    editable: true,
-                    asyncEditorLoading: false,
-                    autoEdit: false
-                };
+            $(function () {
+                var grid,
+                    checkboxSelector = new Slick.CheckboxSelectColumn({
+                        cssClass: "slick-cell-checkboxsel"
+                    }),
+                    columns = [
+                        checkboxSelector.getColumnDefinition(),
+                        {id: "ID", name: "ID", field: "id", width: 120, sortable: true},
+                        {id: "Client ID", name: "Client ID", field: "clientId", width: 120, sortable: true},
+                        {id: "Expires", name: "Expires", field: "expiryTimeString", width: 120, sortable: true},
+                        {id: "Browser", name: "Browser", field: "browser", width: 120, sortable: true},
+                        {id: "Ver", name: "Ver", field: "browserVer", width: 120, sortable: true},
+                        {id: "Platform", name: "Platform", field: "platform", width: 120, sortable: true},
+                        {id: "User Auth", name: "User Auth", field: "userAuth", width: 120, sortable: true},
+                        {id: "User Name", name: "User Name", field: "userName", width: 120, sortable: true} 
+                    ],
+                    options = {
+                        enableColumnReorder: false,
+                        enableCellNavigation: true,
+                        editable: true,
+                        asyncEditorLoading: false,
+                        autoEdit: false
+                    };
 
-            for (var i = 100; i-- > 0; ) {
-                data[i] = {
-                    databaseId: "Task " + i,
-                    clientId: "5 days",
-                    expiryTime: Math.round(Math.random() * 100),
-                    browser: "01/01/2009",
-                    browserVer: "01/05/2009",
-                    platform: i % 5,
-                    userAuth: "C7-" + i,
-                    userName: "C8-" + i
-                };
-            }
+                var filterString = "";
 
-            grid = new Slick.Grid("#container", data, columns, options);
-            
-            grid.onSort.subscribe(function (e, args) {
-                var sign = args.sortAsc ? 1 : -1;
-                var field = args.sortCol.field;
-                data.sort(function (dataRow1, dataRow2) {
-                    var value1 = dataRow1[field], value2 = dataRow2[field];
-                    var result = (value1 === value2) ?  0 :
-                               ((value1 > value2 ? sign : -sign));
-                    return result;
+                var dataView = new Slick.Data.DataView();
+                dataView.onRowCountChanged.subscribe(function (e, args) {
+                  grid.updateRowCount();
+                  grid.render();
                 });
 
-                grid.invalidateAllRows();
-                grid.render();
-            });
-            
-            grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
-            grid.registerPlugin(checkboxSelector);
+                dataView.onRowsChanged.subscribe(function (e, args) {
+                  grid.invalidateRows(args.rows);
+                  grid.render();
+                });
+                dataView.beginUpdate();
+                dataView.setFilter(function(item) {
+                    if (filterString === "") {
+                        return true;
+                    }
+                    return item.clientId.indexOf(databaseId) !== -1 ||
+                           item.clientId.indexOf(clientId) !== -1 ||
+                           item.clientId.indexOf(expiryTimeString) !== -1 ||
+                           item.clientId.indexOf(browser) !== -1 ||
+                           item.clientId.indexOf(browserVer) !== -1 ||
+                           item.clientId.indexOf(platform) !== -1 ||
+                           item.clientId.indexOf(userAuth) !== -1 ||
+                           item.clientId.indexOf(userName) !== -1;
+                });
+                dataView.endUpdate();            
 
-            var columnpicker = new Slick.Controls.ColumnPicker(columns, grid, options);
-            
-            // @todo Filter control of some sort
-            // @todo Scroll bars?
+                function refreshGrid() {
+                    grid.invalidateAllRows();
+                    grid.render();
+                }
+
+                function reloadData() {
+                    $.getJSON("../tokens", function(data) {
+                        dataView.setItems(data);
+                        refreshGrid();
+                    });
+                }
+
+                grid = new Slick.Grid("#container", dataView, columns, options);
+                grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+                grid.registerPlugin(checkboxSelector);
+                var columnpicker = new Slick.Controls.ColumnPicker(columns, grid, options);
+                // @todo Filter control of some sort
+                // @todo Scroll bars?
+
+                grid.onSort.subscribe(function (e, args) {
+                    var sortField = args.sortCol.field;
+                    dataView.sort(function(dataRow1, dataRow2) {
+                            var value1 = dataRow1[sortField], value2 = dataRow2[sortField];
+                            var result = (value1 === value2) ?  0 :
+                                       ((value1 > value2 ? 1 : -1));
+                            return result;
+                        }, args.sortAsc);
+                });
+                reloadData();
+
+                var $filterText = $("#filterText");
+                $("#refreshButton").click(function() {
+                    filterString = "";
+                    $filterText.value="";
+                    reloadData();
+                });
+                $("#revokeButton").click(function() {
+                    alert("B");
+                });
+                $("#revokeAllButton").click(function() {
+                    alert("C");
+                });
+                $filterText.on("change keydown paste input", function() {
+                    var newVal = $filterText.value;
+                    if (newVal !== filterString) {
+                        filterString = $filterText.value;
+                        refreshGrid();
+                    }
+                });
+            });         
         </script>
     </body>
 </html>

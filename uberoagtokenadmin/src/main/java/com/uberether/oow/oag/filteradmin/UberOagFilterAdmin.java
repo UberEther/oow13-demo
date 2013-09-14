@@ -1,7 +1,6 @@
 package com.uberether.oow.oag.filteradmin;
 
 import java.io.IOException;
-import java.util.HashMap;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -10,12 +9,9 @@ import org.apache.cxf.endpoint.Server;
 import org.apache.cxf.jaxrs.JAXRSServerFactoryBean;
 import org.apache.cxf.jaxrs.lifecycle.SingletonResourceProvider;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -24,7 +20,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import javax.ws.rs.core.Response;
@@ -48,9 +43,9 @@ import javax.ws.rs.core.Response;
 public class UberOagFilterAdmin {
     // Sharable objects
 
-    private final static ObjectMapper jsonMapper = new ObjectMapper();
-    private final static TypeReference<HashMap<String, Object>> TYPEREF_MAP = new TypeReference<HashMap<String, Object>>() {
-    };
+    //private final static ObjectMapper jsonMapper = new ObjectMapper();
+    //private final static TypeReference<HashMap<String, Object>> TYPEREF_MAP = new TypeReference<HashMap<String, Object>>() {
+    //};
     private static boolean shutdown = false;
     // Synchronization object
     private final static Object lockObject = new Object();
@@ -79,16 +74,16 @@ public class UberOagFilterAdmin {
      * @return "Instructional text"
      */
     @GET
-    @Path("/")
+    @Path("/{a:(uberoagtokenadmin)?/?}")
     @Produces("text/plain")
     public Response getRoot() {
         return Response.status(Response.Status.SEE_OTHER)
-                       .header("Location", "site/index.html")
+                       .header("Location", "/uberoagtokenadmin/site/index.html")
                        .build();
     }
     
     @GET
-    @Path("/site/{path:.*}")
+    @Path("/uberoagtokenadmin/site/{path:.*}")
     public Response getSiteFile(@PathParam("path") String path) throws IOException {
         
         String mimeType = null;

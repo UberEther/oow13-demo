@@ -2,6 +2,7 @@ package com.uberether.oow.oag.filteradmin;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 
@@ -11,7 +12,9 @@ import org.codehaus.jackson.annotate.JsonPropertyOrder;
  */
 @JsonPropertyOrder({"databaseId","clientId","expiryTime","browser","browserVer","platform","userAuth","userName"})
 public class Token {
-    private String databaseId;
+    private static SimpleDateFormat dateFormatTemplate = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+    
+    private String id;
     private String clientId;
     private Date expiryTime;
     private String browser;
@@ -24,7 +27,7 @@ public class Token {
     }
     
     public Token(ResultSet rs) throws SQLException {
-        databaseId = rs.getString("id");
+        id = rs.getString("id");
         clientId = rs.getString("client_id");
         expiryTime = rs.getTimestamp("expiry_time");
         //accessToken = rs.getString("access_token");
@@ -36,17 +39,17 @@ public class Token {
     }
     
     /**
-     * @return the databaseId
+     * @return the id
      */
-    public String getDatabaseId() {
-        return databaseId;
+    public String getId() {
+        return id;
     }
 
     /**
-     * @param databaseId the databaseId to set
+     * @param id the id to set
      */
-    public void setDatabaseId(String databaseId) {
-        this.databaseId = databaseId;
+    public void setId(String id) {
+        this.id = id;
     }
 
     /**
@@ -75,6 +78,13 @@ public class Token {
      */
     public void setExpiryTime(Date expiryTime) {
         this.expiryTime = expiryTime;
+    }
+    
+    public String getExpiryTimeString() {
+        if (expiryTime == null) {
+            return null;
+        }
+        return ((SimpleDateFormat)dateFormatTemplate.clone()).format(expiryTime);
     }
 
     /**
