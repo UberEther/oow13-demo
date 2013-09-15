@@ -170,7 +170,8 @@ public class UberOagFilterAdmin {
                         "SELECT id, client_id, expiry_time, access_token, "
                         +      "browser, browser_ver, platform, user_auth, "
                         +      "user_name "
-                        + "FROM oauth_access_token")) {
+                        + "FROM oauth_access_token "
+                        +"WHERE expiry_time > NOW()")) {
                     List<Token> rv = new LinkedList();
                     while (rs.next()) {
                         rv.add(new Token(rs));
