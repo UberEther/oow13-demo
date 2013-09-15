@@ -2,28 +2,25 @@
     <head>
         <title>OAG Token Manager</title>
 
-        <link rel="stylesheet" href="slick.grid.css" type="text/css"/>
+        <!-- FavIcon -->
+        <link rel="icon" type="image/png" href="images/uber.gif">
+        
+        <!-- CSS Files for SlickGrid -->
+        <link rel="stylesheet" href="css/slick.grid.css" type="text/css"/>
         <link rel="stylesheet" href="css/smoothness/jquery-ui-1.8.16.custom.css" type="text/css"/>
-        <link rel="stylesheet" href="examples.css" type="text/css"/>
-        <link rel="stylesheet" href="controls/slick.columnpicker.css" type="text/css"/>
+        <link rel="stylesheet" href="css/slick-example-css.css" type="text/css"/>
 
+        <!-- JS Includes for SlickGrid and the plugins we need -->
         <script src="lib/jquery-1.7.min.js"></script>
         <script src="lib/jquery-ui-1.8.16.custom.min.js"></script>
         <script src="lib/jquery.event.drag-2.0.min.js"></script>
         <script src="slick.core.js"></script>
         <script src="plugins/slick.checkboxselectcolumn.js"></script>
-        <script src="plugins/slick.autotooltips.js"></script>
-        <script src="plugins/slick.cellrangedecorator.js"></script>
-        <script src="plugins/slick.cellrangeselector.js"></script>
-        <script src="plugins/slick.cellcopymanager.js"></script>
-        <script src="plugins/slick.cellselectionmodel.js"></script>
         <script src="plugins/slick.rowselectionmodel.js"></script>
-        <script src="controls/slick.columnpicker.js"></script>
-        <script src="slick.formatters.js"></script>
-        <script src="slick.editors.js"></script>
         <script src="slick.dataview.js"></script>
         <script src="slick.grid.js"></script>        
         
+        <!-- Our page's CSS -->
         <style>
             html, body {
                 margin: 0;
@@ -68,25 +65,27 @@
     </head>
     <body>
         <div id="pgHeader">
-            <img src="uberether.png" />
+            <img src="images/uberether.png" alt="UberEther Logo"/>
             <span id="title">OAG Token Manager</span>
-            &nbsp;
             <button id="refreshButton">Refresh</button>
-            &nbsp;
             <button id="revokeSelectedButton">Revoke Selected</button>
-            &nbsp;
             <button id="revokeAllButton">Revoke All</button>
-            &nbsp;
-            Filter: <input id="filterText" type="text" /> <button id="clearFilterButton">Clear Filter</button>
+            Filter: <input id="filterText" type="text" />
+            <button id="clearFilterButton">Clear Filter</button>
         </div>
+        <!-- The following div is where the Grid will be injected -->
         <div id="container"></div>
 
         <script>
             $(function () {
+                // Local variables:
+                    // The grid control
                 var grid,
+                    // Checkbox Column Manager
                     checkboxSelector = new Slick.CheckboxSelectColumn({
                         cssClass: "slick-cell-checkboxsel"
                     }),
+                    // The grid's column definitions
                     columns = [
                         checkboxSelector.getColumnDefinition(),
                         {id: "ID", name: "ID", field: "id", width: 120, sortable: true},
@@ -98,6 +97,7 @@
                         {id: "User Auth", name: "User Auth", field: "userAuth", width: 120, sortable: true},
                         {id: "User Name", name: "User Name", field: "userName", width: 120, sortable: true} 
                     ],
+                    // The grid's options
                     options = {
                         enableColumnReorder: false,
                         enableCellNavigation: true,
@@ -105,41 +105,53 @@
                         asyncEditorLoading: false,
                         autoEdit: false
                     },
-                    $filterText = $("#filterText"),
-                    filterString = "",
+                    // Data view for the grid
                     dataView = new Slick.Data.DataView(),
+                    // Current filter string
+                    filterString = "",
+                    // JQuery reference to our filter text input field
+                    $filterText = $("#filterText"),
+                    // JQuery reference to the refresh button
                     $refreshButton = $("#refreshButton");
                     
+                // Hook the rowCountChanged event between the grid and dataview
                 dataView.onRowCountChanged.subscribe(function (e, args) {
                   grid.updateRowCount();
                   grid.render();
                 });
+                
+                // Hook the rowsChanged event between the grid and dataView
                 dataView.onRowsChanged.subscribe(function (e, args) {
                   grid.invalidateRows(args.rows);
                   grid.render();
                 });
-                dataView.beginUpdate();
+                
+                // Define the filter function for the view...
                 dataView.setFilter(function(item) {
                     if (filterString === "") {
                         return true;
                     }
                     
-                    return item.id.indexOf(filterString) !== -1 ||
-                           item.clientId.indexOf(filterString) !== -1 ||
-                           item.expiryTimeString.indexOf(filterString) !== -1 ||
-                           item.browser.indexOf(filterString) !== -1 ||
-                           item.browserVer.indexOf(filterString) !== -1 ||
-                           item.platform.indexOf(filterString) !== -1 ||
-                           item.userAuth.indexOf(filterString) !== -1 ||
-                           item.userName.indexOf(filterString) !== -1;
+                    return item.id.toLowerCase().indexOf(filterString) !== -1 ||
+                           item.clientId.toLowerCase().indexOf(filterString) !== -1 ||
+                           item.expiryTimeString.toLowerCase().indexOf(filterString) !== -1 ||
+                           item.browser.toLowerCase().indexOf(filterString) !== -1 ||
+                           item.browserVer.toLowerCase().indexOf(filterString) !== -1 ||
+                           item.platform.toLowerCase().indexOf(filterString) !== -1 ||
+                           item.userAuth.toLowerCase().indexOf(filterString) !== -1 ||
+                           item.userName.toLowerCase().indexOf(filterString) !== -1;
                 });
-                dataView.endUpdate();            
 
+                // Create the grid
                 grid = new Slick.Grid("#container", dataView, columns, options);
+                
+                // Set up row selection
                 grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+                
+                // Register the plugins...
                 grid.registerPlugin(checkboxSelector);
-                var columnpicker = new Slick.Controls.ColumnPicker(columns, grid, options);
 
+                // Forward sort requests to the dataview
                 grid.onSort.subscribe(function (e, args) {
                     var sortField = args.sortCol.field;
                     dataView.sort(function(dataRow1, dataRow2) {
@@ -150,39 +162,51 @@
                         }, args.sortAsc);
                 });
 
-
+                // Method to revoke a list of IDs
                 function revokeTokens(ids) {
+                    // Make the JSON call
                     $.ajax("../revoke", { 
-                        data: JSON.stringify(ids), 
+                        data: JSON.stringify(ids), // Pass the IDs as the body
                         contentType: "application/json", 
                         type: "POST",
                         cache: false
                     }).done(function(data, textStatus, jqXHR) {
+                        // Success - refresh the UI
                         $refreshButton.click();
                     }).fail(function(jqXHR, textStatus, errorThrown) {
+                        // Failure - tell the user then try to refresh
                         alert("Failed to revoke tokens: "+textStatus+"\n\n"+errorThrown);
                         $refreshButton.click();
                     });
                 }
                
                 $refreshButton.click(function() {
+                    // Make the JSON call
                     $.ajax("../tokens", { 
                         contentType: "application/json", 
                         type: "GET",
                         cache: false
                     }).done(function(data, textStatus, jqXHR) {
+                        // Success...
+                        // 1) Clear the filter string
                         filterString = "";
                         $filterText.val("");
+                        // 2) Clear old selections
                         grid.setSelectedRows([]);
+                        // 3) Update the data view and grid
                         dataView.beginUpdate();
                         dataView.setItems(data);
                         dataView.endUpdate();
                         grid.invalidate();
                     }).fail(function(jqXHR, textStatus, errorThrown) {
+                        // Failure - tell the user then try to refresh
                         alert("Failed to refresh: "+textStatus+"\n\n"+errorThrown);
                     });
                 });
+                
+                // Register revokeSelected action
                 $("#revokeSelectedButton").click(function() {
+                    // Query all the selected IDs
                     var ids = [];
                     var selectedRows = grid.getSelectedRows();
                     for (var i = selectedRows.length-1; i >= 0; i--) {
@@ -191,10 +215,13 @@
                             ids.push(item.id);
                         }
                     }
-                    
+                    // And then do the revoke
                     revokeTokens(ids);
                 });
+                
+                // Register revokeAll action
                 $("#revokeAllButton").click(function() {
+                    // Query all the IDs
                     var ids = [];
                     for (var i = dataView.getLength() - 1; i >= 0; i--) {
                         var item = dataView.getItem(i);
@@ -202,26 +229,37 @@
                             ids.push(item.id);
                         }
                     }
-                    
+                    // And then do the revoke
                     revokeTokens(ids);
                 });
-                $("#clearFilterButton").click(function(){
-                    filterString = "";
-                    $filterText.val("");
-                    dataView.beginUpdate();
-                    dataView.refresh();
-                    dataView.endUpdate();
-                })
-                $filterText.on("change keydown paste input", function() {
-                    var newVal = $filterText.val();
-                    if (newVal !== filterString) {
-                        filterString = newVal;
+                
+                // Register clearFilter button
+                $("#clearFilterButton").click(function() {                   
+                    if (filterString !== "") {
+                        filterString = "";
+                        $filterText.val("");
+                        grid.setSelectedRows([]);
                         dataView.beginUpdate();
                         dataView.refresh();
                         dataView.endUpdate();
+                        grid.invalidate();
                     }
                 });
                 
+                // Register to pick up realtime changes to the filter inptu
+                $filterText.on("change keydown paste input", function() {
+                    var newVal = $filterText.val();
+                    if (newVal !== filterString) {
+                        filterString = newVal.toLowerCase();
+                        grid.setSelectedRows([]);
+                        dataView.beginUpdate();
+                        dataView.refresh();
+                        dataView.endUpdate();
+                        grid.invalidate();
+                    }
+                });
+                
+                // Now force the initial load
                 $refreshButton.click();            
             });         
         </script>

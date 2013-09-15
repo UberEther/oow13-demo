@@ -54,6 +54,9 @@ import ch.qos.logback.classic.Logger;
  * @author msamblanet
  */
 public class UberXkcdService {
+    /** Class Logger - SLF4J Logger Object */
+    private static org.slf4j.Logger log = LoggerFactory.getLogger(UberXkcdService.class);
+
     // Sharable objects
     private final static Random rand = new Random();
     private final static ObjectMapper jsonMapper = new ObjectMapper();
@@ -308,7 +311,10 @@ public class UberXkcdService {
             Logger rootLogger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
             rootLogger.setLevel(Level.INFO);
 
-            System.out.println("Server ready...waiting for shutdown request...");
+            Logger uberLogger = (Logger) LoggerFactory.getLogger("com.uberether");
+            uberLogger.setLevel(Level.DEBUG);
+
+            log.info("Server ready...waiting for shutdown request...");
 
             synchronized (lockObject) {
                 while (!shutdown) {
@@ -316,7 +322,7 @@ public class UberXkcdService {
                 }
             }
         } finally {
-            System.out.println("Server exiting...");
+            log.info("Server exiting...");
             server.stop();
             server.destroy();
             System.exit(0);

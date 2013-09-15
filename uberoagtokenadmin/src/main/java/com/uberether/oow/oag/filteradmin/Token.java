@@ -7,11 +7,20 @@ import java.util.Date;
 import org.codehaus.jackson.annotate.JsonPropertyOrder;
 
 /**
+ * Data object to encapsulate the JSON representation of the OAG token
+ * 
+ * A read-only field of expiryTimeString is added with the exipry time in
+ * "yyyy-MM-dd HH:mm" format.
  *
  * @author msamblanet
  */
-@JsonPropertyOrder({"databaseId","clientId","expiryTime","browser","browserVer","platform","userAuth","userName"})
+@JsonPropertyOrder({"databaseId","clientId","expiryTime","expiryTimeString","browser","browserVer","platform","userAuth","userName"})
 public class Token {
+    /** 
+     * Simple date format for formatting expiryTimeString - DO NOT USE DIRECTLY
+     * SimpleDateFormat is NOT THREAD SHAFE - do a .clone() to clone the format
+     * and use the clone for your formatting
+     */
     private static SimpleDateFormat dateFormatTemplate = new SimpleDateFormat("yyyy-MM-dd HH:mm");
     
     private String id;
@@ -23,9 +32,19 @@ public class Token {
     private String userAuth;
     private String userName;
 
+    /**
+     * Constructs a token with all values set to Java defaults
+     */
     public Token() {
     }
     
+    /**
+     * Constructs a token, reading all the values from the specified result
+     * set
+     * 
+     * @param rs JDBC Result Set with data
+     * @throws SQLException 
+     */
     public Token(ResultSet rs) throws SQLException {
         id = rs.getString("id");
         clientId = rs.getString("client_id");
@@ -36,6 +55,16 @@ public class Token {
         platform = rs.getString("platform");
         userAuth = rs.getString("user_auth");
         userName = rs.getString("user_name");
+    }
+    
+    /**
+     * @return The expiry time, formatted into a string
+     */
+    public String getExpiryTimeString() {
+        if (expiryTime == null) {
+            return null;
+        }
+        return ((SimpleDateFormat)dateFormatTemplate.clone()).format(expiryTime);
     }
     
     /**
@@ -80,13 +109,6 @@ public class Token {
         this.expiryTime = expiryTime;
     }
     
-    public String getExpiryTimeString() {
-        if (expiryTime == null) {
-            return null;
-        }
-        return ((SimpleDateFormat)dateFormatTemplate.clone()).format(expiryTime);
-    }
-
     /**
      * @return the browser
      */
