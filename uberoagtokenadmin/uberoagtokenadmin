@@ -1,0 +1,82 @@
+#!/bin/sh
+#
+# chkconfig: 2345 99 01
+# description: Uber OAG Token Admin REST Service Startup Script
+
+# Setup variables defining this service
+appname="uberoagtokenadmin"
+java="/usr/java/latest/bin/java"
+jar="/software/uberether/${appname}.jar"
+log="/var/log/${appname}.log"
+shutdownUrl="http://localhost:9001/${appname}/shutdown"
+owner="oracle"
+
+# Search process list to find our process & return PID
+lookupPid() {
+    pid=""
+    pid=`ps -ef |grep -v root | awk '/${jar}/{print $2}'`
+    return pid;
+}
+
+# Start the service
+start() {
+    echo -n "Start service ${appname}"
+    su - ${owner} -c "${java} -jar ${jar}" 2>&1 > ${log} &
+}
+
+# Stop the service and wait up to 5 seconds for it to shutdown
+# If it does not stop, do a kill on the process
+stop() {
+    echo -n "Stop service ${appname}"
+
+    # Call shutdown URL
+    wget ${shutdownUrl}
+
+    # Check every 250ms to see if we shutdown
+    for i in `seq 1 20`; do
+        pid=lookupPid
+        if [ -z "${pid}" ]; then
+           break;
+        fi
+        sleep 0.25
+    done
+
+    # If we did no shutdown, kill the process
+    if [ -n "${pid}" ] ;
+    then
+       echo -n "Failed to stop service ${appname} - issuing kill command on process ${pid}"
+       kill -9 ${pid}
+    fi
+}
+
+# Check the current status of the service
+status() {
+    # Query PID for process to check status
+    pid=lookupPid
+    if [ -z "${pid}" ]; then
+       echo "Service ${appname} is not running"
+    else
+       echo "Service ${appname} is running as PID ${pid}"
+    fi
+}
+
+case "$1" in
+start)
+    start
+;;
+stop)
+    stop
+;;
+status)
+    status
+;;
+restart)
+    stop
+    start
+;;
+*)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+;;
+esac
+
