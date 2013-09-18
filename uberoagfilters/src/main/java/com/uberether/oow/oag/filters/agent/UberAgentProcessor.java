@@ -34,7 +34,7 @@ public class UberAgentProcessor extends MessageProcessor {
             UserAgent agent = UserAgent.parseUserAgentString(agentString);
             if (agent != null) {
                 if (agent.getBrowser() != null) {
-                    browser = agent.getBrowser().getName();
+                    browser = agent.getBrowser().getGroup().getName();
                 }
                 if (agent.getBrowser() != null) {
                     browserVer = agent.getBrowserVersion().getVersion();
