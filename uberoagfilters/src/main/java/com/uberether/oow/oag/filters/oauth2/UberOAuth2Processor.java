@@ -6,6 +6,7 @@ import com.vordel.circuit.Message;
 import com.vordel.circuit.MessageProcessor;
 import com.vordel.circuit.oauth.common.OAuth2Utils;
 import com.vordel.circuit.oauth.token.OAuth2AccessToken;
+import com.vordel.circuit.oauth.token.OAuth2Authentication;
 import com.vordel.trace.Trace;
 
 /**
@@ -36,11 +37,34 @@ public class UberOAuth2Processor extends MessageProcessor {
             
             msg.put("uber.oauth2.access_token", tokenString);
             msg.put("uber.oauth2.id", dbAccessTokenId);
+            msg.put("uber.oauth2.expiryTime", accessToken.getExpiration());
 
             if (Trace.isDebugEnabled()) {
                 Trace.debug("************************************************************");
                 Trace.debug("********** Access Token: "+tokenString);
                 Trace.debug("********** DB ID: "+dbAccessTokenId);
+            }
+            
+            OAuth2Authentication authN = (OAuth2Authentication) msg.get("accesstoken.authn");
+            if (authN != null && authN instanceof OAuth2Authentication) {
+                OAuth2Authentication oAuth2Auth = (OAuth2Authentication) authN;
+                
+                String clientId = oAuth2Auth.getAuthorizationRequest().getClientId();
+                String userAuth = oAuth2Auth.getUserAuthentication();
+                String userName = oAuth2Auth.getPrincipal().toString();
+                
+                msg.put("uber.oauth2.clientId", clientId);
+                msg.put("uber.oauth2.userAuth", userAuth);
+                msg.put("uber.oauth2.userName", userName);
+                
+                if (Trace.isDebugEnabled()) {
+                    Trace.debug("********** Client ID: "+clientId);
+                    Trace.debug("********** UserAuth: "+userAuth);
+                    Trace.debug("********** UserName: "+userName);
+                }
+            }
+
+            if (Trace.isDebugEnabled()) {
                 Trace.debug("************************************************************");
             }
             
