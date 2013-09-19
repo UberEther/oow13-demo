@@ -14,6 +14,10 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -27,6 +31,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.xml.bind.DatatypeConverter;
 
 /**
  * UberOagFilterAdmin - Simple Rest API for quering and revoking OAuth2 tokens
@@ -166,6 +171,14 @@ public class UberOagFilterAdmin {
         try (Connection connection = getDbConnection()) {
             boolean committed = false;
             try (Statement stmt = connection.createStatement()) {
+                
+                // We do not have a background task deleting our tokens
+                // so we will do it before each query to cleanup
+                int nDeleted = stmt.executeUpdate("DELETE FROM oauth_access_token WHERE expiry_time <= NOW()");
+                if (nDeleted > 0) {
+                    log.info("Deleted "+nDeleted+" tokens");
+                }
+                
                 try (ResultSet rs = stmt.executeQuery(
                         "SELECT id, client_id, expiry_time, access_token, "
                         +      "browser, browser_ver, platform, user_auth, "
@@ -211,19 +224,74 @@ public class UberOagFilterAdmin {
         // @todo It would be better to make htis more configurable...
         try (Connection connection = getDbConnection()) {
             boolean committed = false;
-            try (PreparedStatement ps = connection.prepareStatement
-                    ("UPDATE oauth_access_token "
+            try (PreparedStatement psQuery = connection.prepareStatement(
+                    "SELECT access_token FROM oauth_access_token WHERE id = ?");
+                 PreparedStatement psUpdate = connection.prepareStatement(
+                    "UPDATE oauth_access_token "
                     +   "SET expiry_time = DATE_SUB(NOW(),INTERVAL 1 SECOND) "
                     + "WHERE id = ?")) {
                 for (String id : ids) {
-                    log.info("Batching revoke of "+id);
-                    ps.setString(1, id);
-                    ps.addBatch();
+                    psQuery.setString(1, id);
+                    try (ResultSet rs = psQuery.executeQuery()) {
+                        while (rs.next()) {
+                            // Make revoke API call
+                            log.info("Revoking Token for ID: "+id);
+                            
+                            String accessToken = rs.getString(1);
+
+                            // @todo Should be configurable and not hardcoded
+                            URLConnection httpConnection = new URL("http://127.0.0.1:8088/api/oauth/revoke").openConnection();
+                            httpConnection.setDoOutput(true);
+                            httpConnection.setDoInput(true);
+                            httpConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded;charset=UTF-8");
+                            // @todo Should be configurable and not hardcoded
+                            String authHdrValue = "Basic "+
+                                    DatatypeConverter.printBase64Binary(
+                                        ("SampleConfidentialApp"+
+                                         ":"+
+                                         "6808d4b6-ef09-4b0d-8f28-3b05da9c48ec").getBytes("UTF-8")
+                                    ).replaceAll("[ \\n\\r\\t]+","");
+                            
+                            httpConnection.setRequestProperty("Authorization", authHdrValue);
+                            String query = "token="+ URLEncoder.encode(accessToken, "UTF-8");
+
+                            if (log.isDebugEnabled()) {
+                                log.debug("   URL: "+httpConnection.getURL());
+                                // Note - you can't use getRequestProperty on Authoriztion - see http://stackoverflow.com/questions/2864062/getrequestpropertyauthorization-always-returns-null
+                                log.debug("   Authorization: "+authHdrValue); 
+                                log.debug("   Content-Type: "+httpConnection.getRequestProperty("Content-Type"));
+                                log.debug("   Query: "+query);
+                            }
+                            
+                            // Make the request
+                            try (OutputStream httpOut = httpConnection.getOutputStream()) {                                
+                                httpOut.write(query.getBytes("UTF-8"));
+                            }
+
+                            // And dump the output
+                            try (InputStream response = httpConnection.getInputStream();
+                                 ByteArrayOutputStream bs = new ByteArrayOutputStream()) {
+                                byte[] buffer = new byte[4096];
+                                int len;
+                                while ((len = response.read(buffer)) > 0) {
+                                    bs.write(buffer, 0, len);
+                                }
+                                if (log.isDebugEnabled()) {
+                                   log.debug("Response from revoke: "+new String(bs.toByteArray(), "UTF-8"));   
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Update DB
+                    log.info("Batching exp in DB: "+id);
+                    psUpdate.setString(1, id);
+                    psUpdate.addBatch();
                 }
                 
                 log.debug("Executng batch");
                 int n = 0;
-                for (int i : ps.executeBatch()) {
+                for (int i : psUpdate.executeBatch()) {
                     n += i;
                 }
                 
