@@ -1,0 +1,24 @@
+<html>
+  <head>
+    <title>It's the App</title>
+    <script src="js/jquery.js"></script>
+    <script>
+      $("document").ready(function() {
+        $.getJSON("/uberxkcd/random", function(data) {
+          var items = [];
+          $.each(data, function(key, val) {
+            items.push('<li id="' + key + '">' + key + '-' + val + '</li>');
+          });
+          $('<ul/>', {
+            'class': 'my-new-list',
+            html: items.join('')
+          }).appendTo('body');
+          $('<img src="data:' + data.img.mime + ';base64,' + data.img.b64 + '" alt="XKCD Comic"/>').appendTo('body')
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <h1>Here!</h1>
+  </body>
+</html>
